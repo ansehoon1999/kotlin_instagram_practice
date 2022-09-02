@@ -20,6 +20,7 @@ import com.example.myapplication2.R
 import com.example.myapplication2.navigation.model.AlarmDTO
 import com.example.myapplication2.navigation.model.ContentDTO
 import com.example.myapplication2.navigation.model.FollowDTO
+import com.example.myapplication2.navigation.util.FcmPush
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.activity_main.*
@@ -41,7 +42,7 @@ class UserFragment : Fragment() {
         auth = FirebaseAuth.getInstance()
         currentUserUid = auth?.currentUser?.uid
 
-        if(uid == currentUserUid) {
+        if(uid == currentUserUid) { //만약에 내 home 화면 이라면?
             fragmentView?.account_btn_follow_signout?.text = getString(R.string.signout)
             fragmentView?.account_btn_follow_signout?.setOnClickListener {
                 activity?.finish()
@@ -49,7 +50,7 @@ class UserFragment : Fragment() {
                 auth?.signOut()
             }
         } else {
-            fragmentView?.account_btn_follow_signout?.text = getString(R.string.follow)
+            fragmentView?.account_btn_follow_signout?.text = getString(R.string.follow) // 만약에 내 user 화면이 아니라면
             var mainActivity = (activity as MainActivity)
             mainActivity?.toolbar_username?.text = arguments?.getString("userId")
             mainActivity?.toolbar_btn_back?.setOnClickListener {
@@ -80,18 +81,16 @@ class UserFragment : Fragment() {
 
     fun getFollowerAndFollowing(){
         firestore?.collection("users")?.document(uid!!)?.addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
-            if(documentSnapshot == null) return@addSnapshotListener
+            if(documentSnapshot == null) return@addSnapshotListener // 이게 뭘까?
             var followDTO = documentSnapshot.toObject(FollowDTO::class.java)
-            if(followDTO?.followingCount != null){
-                fragmentView?.account_tv_following_count?.text = followDTO?.followingCount?.toString()
-            }
+
             if(followDTO?.followerCount != null){
                 fragmentView?.account_tv_follower_count?.text = followDTO?.followerCount?.toString()
                 if(followDTO?.followers?.containsKey(currentUserUid!!)){
                     fragmentView?.account_btn_follow_signout?.text = getString(R.string.follow_cancel)
                     fragmentView?.account_btn_follow_signout?.background
                         ?.setColorFilter(ContextCompat.getColor(requireActivity(),R.color.colorLightGray),PorterDuff.Mode.MULTIPLY)
-                }else{
+                } else{
                     if(uid != currentUserUid){
                         fragmentView?.account_btn_follow_signout?.text = getString(R.string.follow)
                         fragmentView?.account_btn_follow_signout?.background?.colorFilter = null
@@ -140,6 +139,10 @@ class UserFragment : Fragment() {
         alarmDTO.kind = 2
         alarmDTO.timestamp = System.currentTimeMillis()
         FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO)
+
+        var message = auth?.currentUser?.email + getString(R.string.alarm_follow)
+        FcmPush.instance.sendMessage(destinationUid, "Howlstagram",message)
+
     }
 
 
