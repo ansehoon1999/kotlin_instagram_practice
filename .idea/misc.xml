@@ -4,12 +4,14 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/activity_add_photo.xml" value="0.2390625" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/activity_comment.xml" value="0.25364583333333335" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/activity_login.xml" value="0.1296875" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/activity_main.xml" value="0.25364583333333335" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/fragment_alarm.xml" value="0.1" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/fragment_detail.xml" value="0.1" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/fragment_grid.xml" value="0.1" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/fragment_user.xml" value="0.1" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/item_comment.xml" value="0.25364583333333335" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/layout/item_detail.xml" value="0.25364583333333335" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/MyApplication2/app/src/main/res/menu/bottom_navigation_main.xml" value="0.1" />
       </map>

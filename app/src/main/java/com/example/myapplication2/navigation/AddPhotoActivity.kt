@@ -74,7 +74,7 @@ class AddPhotoActivity : AppCompatActivity() {
             var contentDTO = ContentDTO()
 
             //Insert downloadUrl of image
-            contentDTO.imageUrl = uri.toString()
+            contentDTO.imageUrl = uri?.toString()
 
             //Insert uid of user
             contentDTO.uid = auth?.currentUser?.uid
@@ -83,7 +83,7 @@ class AddPhotoActivity : AppCompatActivity() {
             contentDTO.userId = auth?.currentUser?.email
 
             //Insert explain of content
-            contentDTO.explain = addphoto_edit_explain.text.toString()
+            contentDTO.explain = addphoto_edit_explain?.text.toString()
 
             //Insert timestamp
             contentDTO.timestamp = System.currentTimeMillis()
