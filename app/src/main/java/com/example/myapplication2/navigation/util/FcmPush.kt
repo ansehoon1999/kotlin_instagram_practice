@@ -12,7 +12,7 @@ class FcmPush {
     var serverKey = "AIzaSyDAwfR-IHhLQT8zFbT94pNZxVXZqAbRHWw"
     var gson : Gson? = null
     var okHttpClient : OkHttpClient? = null
-    companion object {
+    companion object{
         var instance = FcmPush()
     }
 
@@ -20,11 +20,10 @@ class FcmPush {
         gson = Gson()
         okHttpClient = OkHttpClient()
     }
-
-    fun sendMessage(destinationUid : String, title : String, message : String) {
+    fun sendMessage(destinationUid : String, title : String, message : String){
         FirebaseFirestore.getInstance().collection("pushtokens").document(destinationUid).get().addOnCompleteListener {
-            task ->
-            if(task.isSuccessful) {
+                task ->
+            if(task.isSuccessful){
                 var token = task?.result?.get("pushToken").toString()
 
                 var pushDTO = PushDTO()
@@ -32,21 +31,23 @@ class FcmPush {
                 pushDTO.notification.title = title
                 pushDTO.notification.body = message
 
-                var body  = RequestBody.create(JSON,gson?.toJson(pushDTO))
+                var body = RequestBody.create(JSON,gson?.toJson(pushDTO))
                 var request = Request.Builder()
-                    .addHeader("Content-Type", "application/json")
-                    .addHeader("Authorization", "key="+serverKey)
+                    .addHeader("Content-Type","application/json")
+                    .addHeader("Authorization","key="+serverKey)
                     .url(url)
                     .post(body)
                     .build()
 
-                okHttpClient?.newCall(request)?.enqueue(object : Callback {
+                okHttpClient?.newCall(request)?.enqueue(object : Callback{
                     override fun onFailure(call: Call?, e: IOException?) {
+
                     }
 
                     override fun onResponse(call: Call?, response: Response?) {
                         println(response?.body()?.string())
                     }
+
                 })
             }
         }

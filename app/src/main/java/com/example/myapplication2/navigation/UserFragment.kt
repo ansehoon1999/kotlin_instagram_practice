@@ -26,13 +26,13 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_user.view.*
 
-class UserFragment : Fragment() {
+class UserFragment : Fragment(){
     var fragmentView : View? = null
     var firestore : FirebaseFirestore? = null
     var uid : String? = null
-    var auth : FirebaseAuth? =null
+    var auth : FirebaseAuth? = null
     var currentUserUid : String? = null
-    companion object {  // static
+    companion object {
         var PICK_PROFILE_FROM_ALBUM = 10
     }
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -42,55 +42,55 @@ class UserFragment : Fragment() {
         auth = FirebaseAuth.getInstance()
         currentUserUid = auth?.currentUser?.uid
 
-        if(uid == currentUserUid) { //만약에 내 home 화면 이라면?
+        if(uid == currentUserUid){
+            //MyPage
             fragmentView?.account_btn_follow_signout?.text = getString(R.string.signout)
             fragmentView?.account_btn_follow_signout?.setOnClickListener {
                 activity?.finish()
-                startActivity(Intent(activity, LoginActivity::class.java))
+                startActivity(Intent(activity,LoginActivity::class.java))
                 auth?.signOut()
             }
-        } else {
-            fragmentView?.account_btn_follow_signout?.text = getString(R.string.follow) // 만약에 내 user 화면이 아니라면
-            var mainActivity = (activity as MainActivity)
-            mainActivity?.toolbar_username?.text = arguments?.getString("userId")
-            mainActivity?.toolbar_btn_back?.setOnClickListener {
-                mainActivity?.bottom_navigation.selectedItemId = R.id.action_home
+        }else{
+            //OtherUserPage
+            fragmentView?.account_btn_follow_signout?.text = getString(R.string.follow)
+            var mainactivity = (activity as MainActivity)
+            mainactivity?.toolbar_username?.text = arguments?.getString("userId")
+            mainactivity?.toolbar_btn_back?.setOnClickListener {
+                mainactivity.bottom_navigation.selectedItemId = R.id.action_home
             }
-            mainActivity?.toolbar_title_image?.visibility = View.GONE
-            mainActivity?.toolbar_username?.visibility = View.VISIBLE
-            mainActivity?.toolbar_btn_back?.visibility = View.VISIBLE
+            mainactivity?.toolbar_title_image?.visibility = View.GONE
+            mainactivity?.toolbar_username?.visibility = View.VISIBLE
+            mainactivity?.toolbar_btn_back?.visibility = View.VISIBLE
             fragmentView?.account_btn_follow_signout?.setOnClickListener {
                 requestFollow()
             }
         }
-
-
         fragmentView?.account_reyclerview?.adapter = UserFragmentRecyclerViewAdapter()
-        fragmentView?.account_reyclerview?.layoutManager = GridLayoutManager(requireActivity(), 3)
+        fragmentView?.account_reyclerview?.layoutManager = GridLayoutManager(activity!!, 3)
 
         fragmentView?.account_iv_profile?.setOnClickListener {
             var photoPickerIntent = Intent(Intent.ACTION_PICK)
             photoPickerIntent.type = "image/*"
-            activity?.startActivityForResult(photoPickerIntent, PICK_PROFILE_FROM_ALBUM)
+            activity?.startActivityForResult(photoPickerIntent,PICK_PROFILE_FROM_ALBUM)
         }
-
-        getProfileImages()
+        getProfileImage()
         getFollowerAndFollowing()
         return fragmentView
     }
-
     fun getFollowerAndFollowing(){
         firestore?.collection("users")?.document(uid!!)?.addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
-            if(documentSnapshot == null) return@addSnapshotListener // 이게 뭘까?
+            if(documentSnapshot == null) return@addSnapshotListener
             var followDTO = documentSnapshot.toObject(FollowDTO::class.java)
-
+            if(followDTO?.followingCount != null){
+                fragmentView?.account_tv_following_count?.text = followDTO?.followingCount?.toString()
+            }
             if(followDTO?.followerCount != null){
                 fragmentView?.account_tv_follower_count?.text = followDTO?.followerCount?.toString()
                 if(followDTO?.followers?.containsKey(currentUserUid!!)){
                     fragmentView?.account_btn_follow_signout?.text = getString(R.string.follow_cancel)
                     fragmentView?.account_btn_follow_signout?.background
-                        ?.setColorFilter(ContextCompat.getColor(requireActivity(),R.color.colorLightGray),PorterDuff.Mode.MULTIPLY)
-                } else{
+                        ?.setColorFilter(ContextCompat.getColor(activity!!,R.color.colorLightGray),PorterDuff.Mode.MULTIPLY)
+                }else{
                     if(uid != currentUserUid){
                         fragmentView?.account_btn_follow_signout?.text = getString(R.string.follow)
                         fragmentView?.account_btn_follow_signout?.background?.colorFilter = null
@@ -100,38 +100,62 @@ class UserFragment : Fragment() {
             }
         }
     }
-    fun requestFollow() {
-        //save data to my account
-        var toDocFollowing = firestore?.collection("users")?.document(currentUserUid!!)
+    fun requestFollow(){
+        //Save data to my account
+        var tsDocFollowing = firestore?.collection("users")?.document(currentUserUid!!)
         firestore?.runTransaction { transaction ->
-            var followDTO = transaction.get(toDocFollowing!!).toObject(FollowDTO::class.java)
-            if (followDTO == null) {
+            var followDTO = transaction.get(tsDocFollowing!!).toObject(FollowDTO::class.java)
+            if(followDTO == null){
                 followDTO = FollowDTO()
-                followDTO!!.followerCount = 1
-                followDTO!!.followers[uid!!] = true
-                followerAlarm(uid!!)
-                transaction.set(toDocFollowing, followDTO)
+                followDTO!!.followingCount = 1
+                followDTO!!.followings[uid!!] = true
+
+                transaction.set(tsDocFollowing,followDTO!!)
                 return@runTransaction
-
             }
 
-            if (followDTO.followings.containsKey(uid)) {
-                //it remove following third person when a third person follow me
-                followDTO?.followerCount = followDTO?.followerCount - 1
-                followDTO!!.followers.remove(currentUserUid!!)
-            } else {
-                followDTO?.followerCount = followDTO?.followerCount + 1
-                followDTO!!.followers[currentUserUid!!] = true
+            if(followDTO.followings.containsKey(uid)){
+                //It remove following third person when a third person follow me
+                followDTO?.followingCount = followDTO?.followingCount - 1
+                followDTO?.followings.remove(uid)
+            }else{
+                //It add following third person when a third person do not follow me
+                followDTO?.followingCount = followDTO?.followingCount + 1
+                followDTO?.followings[uid!!] = true
             }
-
-            transaction.set(toDocFollowing, followDTO!!)
+            transaction.set(tsDocFollowing,followDTO)
             return@runTransaction
         }
 
-        //
-    }
+        //Save data to third account
 
-    fun followerAlarm(destinationUid : String) {
+        var tsDocFollower = firestore?.collection("users")?.document(uid!!)
+        firestore?.runTransaction { transaction ->
+            var followDTO = transaction.get(tsDocFollower!!).toObject(FollowDTO::class.java)
+            if(followDTO == null){
+                followDTO = FollowDTO()
+                followDTO!!.followerCount = 1
+                followDTO!!.followers[currentUserUid!!] = true
+                followerAlarm(uid!!)
+                transaction.set(tsDocFollower,followDTO!!)
+                return@runTransaction
+            }
+
+            if(followDTO!!.followers.containsKey(currentUserUid!!)){
+                //It cancel my follower when I follow a third person
+                followDTO!!.followerCount = followDTO!!.followerCount - 1
+                followDTO!!.followers.remove(currentUserUid!!)
+            }else{
+                //It add my follower when I don't follow a third person
+                followDTO!!.followerCount = followDTO!!.followerCount + 1
+                followDTO!!.followers[currentUserUid!!] = true
+                followerAlarm(uid!!)
+            }
+            transaction.set(tsDocFollower,followDTO!!)
+            return@runTransaction
+        }
+    }
+    fun followerAlarm(destinationUid : String){
         var alarmDTO = AlarmDTO()
         alarmDTO.destinationUid = destinationUid
         alarmDTO.userId = auth?.currentUser?.email
@@ -141,23 +165,16 @@ class UserFragment : Fragment() {
         FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO)
 
         var message = auth?.currentUser?.email + getString(R.string.alarm_follow)
-        FcmPush.instance.sendMessage(destinationUid, "Howlstagram",message)
-
+        FcmPush.instance.sendMessage(destinationUid,"Howlstagram",message)
     }
-
-
-
-    fun getProfileImages() {
+    fun getProfileImage(){
         firestore?.collection("profileImages")?.document(uid!!)?.addSnapshotListener { documentSnapshot, firebaseFirestoreException ->
             if(documentSnapshot == null) return@addSnapshotListener
-            if(documentSnapshot.data != null) {
+            if(documentSnapshot.data != null){
                 var url = documentSnapshot?.data!!["image"]
-                Glide.with(requireActivity()).load(url).apply(RequestOptions().circleCrop()).into(fragmentView?.account_iv_profile!!)
+                Glide.with(activity!!).load(url).apply(RequestOptions().circleCrop()).into(fragmentView?.account_iv_profile!!)
             }
-
         }
-
-
     }
     inner class UserFragmentRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
         var contentDTOs : ArrayList<ContentDTO> = arrayListOf()
@@ -174,6 +191,7 @@ class UserFragment : Fragment() {
                 notifyDataSetChanged()
             }
         }
+
         override fun onCreateViewHolder(p0: ViewGroup, p1: Int): RecyclerView.ViewHolder {
             var width = resources.displayMetrics.widthPixels / 3
 
@@ -188,7 +206,6 @@ class UserFragment : Fragment() {
 
         override fun getItemCount(): Int {
             return contentDTOs.size
-
         }
 
         override fun onBindViewHolder(p0: RecyclerView.ViewHolder, p1: Int) {

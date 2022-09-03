@@ -17,42 +17,37 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.fragment_alarm.view.*
 import kotlinx.android.synthetic.main.item_comment.view.*
 
-class AlarmFragment : Fragment() {
+class AlarmFragment : Fragment(){
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        var view = LayoutInflater.from(activity).inflate(R.layout.fragment_alarm, container, false)
-        view.alarmfragment_recylerview.adapter = AlarmRecyclerviewAdapter()
-        view.alarmfragment_recylerview.layoutManager = LinearLayoutManager(activity)
+        var view = LayoutInflater.from(activity).inflate(R.layout.fragment_alarm,container,false)
+        view.alarmfragment_recyclerview.adapter = AlarmRecyclerviewAdapter()
+        view.alarmfragment_recyclerview.layoutManager = LinearLayoutManager(activity)
 
         return view
     }
-
-    inner class AlarmRecyclerviewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    inner class AlarmRecyclerviewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
         var alarmDTOList : ArrayList<AlarmDTO> = arrayListOf()
 
         init {
             val uid = FirebaseAuth.getInstance().currentUser?.uid
 
-            FirebaseFirestore.getInstance().collection("alarms").whereEqualTo("destinationUid", uid).addSnapshotListener {
-                querySnapshot, firebaseFirestoreException ->
-
+            FirebaseFirestore.getInstance().collection("alarms").whereEqualTo("destinationUid",uid).addSnapshotListener { querySnapshot, firebaseFirestoreException ->
                 alarmDTOList.clear()
                 if(querySnapshot == null) return@addSnapshotListener
 
-                for(snapshot in querySnapshot.documents) {
+                for(snapshot in querySnapshot.documents){
                     alarmDTOList.add(snapshot.toObject(AlarmDTO::class.java)!!)
                 }
                 notifyDataSetChanged()
             }
         }
         override fun onCreateViewHolder(p0: ViewGroup, p1: Int): RecyclerView.ViewHolder {
-            var view = LayoutInflater.from(p0.context).inflate(R.layout.item_comment, p0, false)
+            var view = LayoutInflater.from(p0.context).inflate(R.layout.item_comment,p0,false)
 
-            return CustomerViewHolder(view)
+            return CustomViewHolder(view)
         }
-
-        inner class CustomerViewHolder(view : View) : RecyclerView.ViewHolder(view)
-
+        inner class CustomViewHolder(view : View) : RecyclerView.ViewHolder(view)
         override fun getItemCount(): Int {
             return alarmDTOList.size
         }
@@ -60,31 +55,29 @@ class AlarmFragment : Fragment() {
         override fun onBindViewHolder(p0: RecyclerView.ViewHolder, p1: Int) {
             var view = p0.itemView
 
-            FirebaseFirestore.getInstance().collection("profileImages").document(alarmDTOList[p1].uid!!).get().addOnCompleteListener {
-                task ->
-                if(task.isSuccessful) {
+            FirebaseFirestore.getInstance().collection("profileImages").document(alarmDTOList[p1].uid!!).get().addOnCompleteListener { task ->
+                if(task.isSuccessful){
                     val url = task.result!!["image"]
                     Glide.with(view.context).load(url).apply(RequestOptions().circleCrop()).into(view.commentviewitem_imageview_profile)
                 }
             }
 
-            when(alarmDTOList[p1].kind) {
+            when(alarmDTOList[p1].kind){
                 0 -> {
-                    var str_0 = alarmDTOList[p1].userId + getString(R.string.alarm_favorite)
+                    val str_0 = alarmDTOList[p1].userId + getString(R.string.alarm_favorite)
                     view.commentviewitem_textview_profile.text = str_0
-
                 }
                 1 -> {
-                    var str_0 = alarmDTOList[p1].userId + " " + getString(R.string.alarm_comment) + " of " + alarmDTOList[p1].message
+                    val str_0 = alarmDTOList[p1].userId + " " + getString(R.string.alarm_comment) +" of " + alarmDTOList[p1].message
                     view.commentviewitem_textview_profile.text = str_0
                 }
                 2 -> {
-                    var str_0 = alarmDTOList[p1].userId + getString(R.string.alarm_follow)
+                    val str_0 = alarmDTOList[p1].userId + " " + getString(R.string.alarm_follow)
                     view.commentviewitem_textview_profile.text = str_0
-
                 }
             }
             view.commentviewitem_textview_comment.visibility = View.INVISIBLE
         }
+
     }
 }

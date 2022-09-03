@@ -1,6 +1,6 @@
 package com.example.myapplication2.navigation.model
 
-data class AlarmDTO (
+data class AlarmDTO(
     var destinationUid : String? = null,
     var userId : String? = null,
     var uid : String? = null,
@@ -11,4 +11,4 @@ data class AlarmDTO (
     var kind : Int? = null,
     var message : String? = null,
     var timestamp : Long? = null
-        )
+)
